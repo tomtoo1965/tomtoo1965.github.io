@@ -1,13 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>Page Title</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wasmer-Insel</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d0d14;
+      color: #e0d8ff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3rem;
+      letter-spacing: 6px;
+      color: #b084ff;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      letter-spacing: 3px;
+      color: #6655aa;
+      margin-bottom: 60px;
+      text-transform: uppercase;
+    }
+
+    .crew {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .member {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .member:hover { transform: translateY(-8px); }
+
+    .member img {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #2a2040;
+      background: #1a1428;
+    }
+
+    .member span {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      letter-spacing: 4px;
+      color: #8866cc;
+    }
+  </style>
 </head>
 <body>
 
-    <h1>Hello World!</h1>
-    <p>This is a basic HTML5 page.</p>
+  <h1>DIE GANG</h1>
+  <p class="subtitle">Wasmer-Insel · 13. Dimension</p>
+
+  <div class="crew">
+    <div class="member">
+      <img src="grisu.png" alt="Grisu">
+      <span>Grisu</span>
+    </div>
+    <div class="member">
+      <img src="maus.png" alt="Die Maus">
+      <span>Die Maus</span>
+    </div>
+    <div class="member">
+      <img src="otter.png" alt="Frau Bademeisterin">
+      <span>Frau Bademeisterin</span>
+    </div>
+  </div>
 
 </body>
 </html>
