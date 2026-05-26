@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>π Blind Test</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #080808;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', Courier, monospace;
+  color: #fff;
+  padding: 20px;
+}
+#app {
+  width: 100%;
+  max-width: 480px;
+  background: linear-gradient(160deg, #161616, #0d0d0d);
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 30px 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.9);
+  text-align: center;
+}
+.brand-sub  { font-size: 10px; color: #444; letter-spacing: 4px; margin-bottom: 4px; }
+.brand-name { font-size: 32px; font-weight: bold; color: #ff4500; letter-spacing: 4px; }
+.brand-tag  { font-size: 10px; color: #444; letter-spacing: 3px; margin-top: 4px; }
+
+#phase-label {
+  font-size: 12px; letter-spacing: 3px; color: #555;
+  margin: 28px 0 8px; min-height: 18px;
+}
+#big-label {
+  font-size: 64px; font-weight: bold; color: #ff4500;
+  letter-spacing: 6px; min-height: 80px;
+  text-shadow: 0 0 30px #ff450066;
+  transition: color 0.3s;
+}
+#progress-wrap {
+  width: 100%; height: 4px; background: #1a1a1a;
+  border-radius: 2px; margin: 20px 0; overflow: hidden;
+}
+#progress-bar {
+  height: 100%; width: 0%; background: #ff4500;
+  border-radius: 2px; transition: width 0.1s linear;
+}
+#status {
+  font-size: 11px; color: #444; letter-spacing: 2px;
+  min-height: 16px; margin-bottom: 24px;
+}
+#reveal-box {
+  display: none; background: #0f0f0f;
+  border: 1px solid #333; border-radius: 10px;
+  padding: 20px; margin-bottom: 24px;
+}
+.r-row {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 10px 0;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 11px; letter-spacing: 2px;
+}
+.r-row:last-child { border-bottom: none; }
+.r-letter { font-size: 26px; font-weight: bold; }
+.r-what   { color: #666; }
+.r-what span { color: #fff; }
+
+button {
+  background: none; border: 2px solid #ff4500;
+  color: #ff4500; cursor: pointer;
+  font-family: 'Courier New', monospace;
+  border-radius: 4px; padding: 14px 28px;
+  font-size: 12px; letter-spacing: 3px;
+  transition: all .15s; width: 100%;
+  margin-bottom: 10px;
+}
+button:hover, button:active { background: #ff4500; color: #000; }
+
+#vote-row { display: none; gap: 10px; margin-bottom: 16px; }
+#vote-row button {
+  font-size: 28px; font-weight: bold;
+  letter-spacing: 4px; padding: 18px; margin-bottom: 0;
+}
+#btn-a { border-color: #00ccff !important; color: #00ccff !important; }
+#btn-a:hover, #btn-a:active { background: #00ccff !important; color: #000 !important; }
+#btn-b { border-color: #aa44ff !important; color: #aa44ff !important; }
+#btn-b:hover, #btn-b:active { background: #aa44ff !important; color: #000 !important; }
+
+#vote-question {
+  font-size: 11px; color: #555; letter-spacing: 2px;
+  margin-bottom: 16px; display: none;
+}
+#result-msg {
+  font-size: 13px; letter-spacing: 2px;
+  min-height: 18px; margin-bottom: 20px;
+  display: none;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="brand-sub">BLIND LISTENING TEST</div>
+  <div class="brand-name">A vs B</div>
+  <div class="brand-tag">π · RANDOM · WHICH IS WHICH?</div>
+
+  <div id="phase-label">READY</div>
+  <div id="big-label">?</div>
+  <div id="progress-wrap"><div id="progress-bar"></div></div>
+  <div id="status">NO SAMPLES · PURE SYNTHESIS</div>
+
+  <div id="vote-question">WHICH SOUNDED MORE ORGANIC?</div>
+  <div id="vote-row">
+    <button id="btn-a">A</button>
+    <button id="btn-b">B</button>
+  </div>
+
+  <div id="result-msg"></div>
+  <div id="reveal-box"></div>
+
+  <button id="btn-start">▶ START TEST</button>
+</div>
+
+<script>
+// ── Pi spigot ────────────────────────────────────────────────────────────────
+function* piDigitGenerator() {
+  let q=1n,r=0n,t=1n,k=1n,n=3n,l=3n;
+  while(true){
+    if(4n*q+r-t<n*t){
+      yield Number(n);
+      let nr=10n*(r-n*t); n=((10n*(3n*q+r))/t)-10n*n; q*=10n; r=nr;
+    } else {
+      let nr=(2n*q+r)*l; let nn=(q*(7n*k+2n)+r*l)/(t*l);
+      q*=k; t*=l; l+=2n; k+=1n; n=nn; r=nr;
+    }
+  }
+}
+
+// ── Web Audio synth ──────────────────────────────────────────────────────────
+function makeNoise(ctx, dur) {
+  const len = Math.ceil(ctx.sampleRate * dur);
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  return src;
+}
+
+function playSound(ctx, id, time) {
+  const out = ctx.destination;
+  switch(id) {
+    case 'kick': {
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(out);
+      o.frequency.setValueAtTime(160,time);
+      o.frequency.exponentialRampToValueAtTime(0.01,time+0.45);
+      g.gain.setValueAtTime(1.2,time);
+      g.gain.exponentialRampToValueAtTime(0.001,time+0.45);
+      o.start(time); o.stop(time+0.5); break;
+    }
+    case 'snare': {
+      const n=makeNoise(ctx,0.25), f=ctx.createBiquadFilter(), g=ctx.createGain();
+      f.type='highpass'; f.frequency.value=1800;
+      n.connect(f); f.connect(g); g.connect(out);
+      g.gain.setValueAtTime(0.9,time);
+      g.gain.exponentialRampToValueAtTime(0.001,time+0.18);
+      n.start(time); n.stop(time+0.25); break;
+    }
+    case 'clap': {
+      [0,0.01,0.02].forEach(off=>{
+        const n=makeNoise(ctx,0.15), f=ctx.createBiquadFilter(), g=ctx.createGain();
+        f.type='bandpass'; f.frequency.value=1200; f.Q.value=0.8;
+        n.connect(f); f.connect(g); g.connect(out);
+        g.gain.setValueAtTime(0.7,time+off);
+        g.gain.exponentialRampToValueAtTime(0.001,time+off+0.12);
+        n.start(time+off); n.stop(time+off+0.15);
+      }); break;
+    }
+    case 'hihat': {
+      const n=makeNoise(ctx,0.08), f=ctx.createBiquadFilter(), g=ctx.createGain();
+      f.type='highpass'; f.frequency.value=7000;
+      n.connect(f); f.connect(g); g.connect(out);
+      g.gain.setValueAtTime(0.5,time);
+      g.gain.exponentialRampToValueAtTime(0.001,time+0.06);
+      n.start(time); n.stop(time+0.08); break;
+    }
+    case 'ohihat': {
+      const n=makeNoise(ctx,0.4), f=ctx.createBiquadFilter(), g=ctx.createGain();
+      f.type='highpass'; f.frequency.value=6000;
+      n.connect(f); f.connect(g); g.connect(out);
+      g.gain.setValueAtTime(0.35,time);
+      g.gain.exponentialRampToValueAtTime(0.001,time+0.35);
+      n.start(time); n.stop(time+0.4); break;
+    }
+    case 'tom1': {
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(out);
+      o.frequency.setValueAtTime(200,time);
+      o.frequency.exponentialRampToValueAtTime(60,time+0.3);
+      g.gain.setValueAtTime(0.9,time);
+      g.gain.exponentialRampToValueAtTime(0.001,time+0.3);
+      o.start(time); o.stop(time+0.35); break;
+    }
+    case 'tom2': {
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(out);
+      o.frequency.setValueAtTime(120,time);
+      o.frequency.exponentialRampToValueAtTime(40,time+0.35);
+      g.gain.setValueAtTime(1,time);
+      g.gain.exponentialRampToValueAtTime(0.001,time+0.35);
+      o.start(time); o.stop(time+0.4); break;
+    }
+    case 'rim': {
+      const n=makeNoise(ctx,0.06), f=ctx.createBiquadFilter(), g=ctx.createGain();
+      f.type='bandpass'; f.frequency.value=3500; f.Q.value=4;
+      n.connect(f); f.connect(g); g.connect(out);
+      g.gain.setValueAtTime(0.7,time);
+      g.gain.exponentialRampToValueAtTime(0.001,time+0.05);
+      n.start(time); n.stop(time+0.06); break;
+    }
+  }
+}
+
+// ── Grid generation ───────────────────────────────────────────────────────────
+const STEPS = 16;
+const BPM = 120;
+const STEP_SEC = (60/BPM)/4;
+const DURATION = 5000;
+const TRACKS = ['kick','snare','clap','hihat','ohihat','tom1','tom2','rim'];
+const THRESH  = {kick:5,snare:7,clap:8,hihat:4,ohihat:8,tom1:7,tom2:8,rim:8};
+
+function makePiGrid() {
+  const gen = piDigitGenerator(); gen.next();
+  const g = {};
+  TRACKS.forEach(t => {
+    g[t] = [];
+    for(let i=0;i<STEPS;i++) g[t].push(gen.next().value >= THRESH[t]);
+  });
+  return g;
+}
+
+function makeRandomGrid() {
+  const g = {};
+  TRACKS.forEach(t => {
+    const prob = (10-THRESH[t])/10;
+    g[t] = Array(STEPS).fill(0).map(()=>Math.random()<prob);
+  });
+  return g;
+}
+
+// ── Playback ──────────────────────────────────────────────────────────────────
+function playGrid(grid, onDone) {
+  const ctx = new AudioContext();
+  const startTime = ctx.currentTime + 0.1;
+  const barsNeeded = Math.ceil(DURATION/1000 / (STEPS*STEP_SEC));
+
+  for(let bar=0; bar<barsNeeded+1; bar++){
+    for(let s=0;s<STEPS;s++){
+      const t = startTime + (bar*STEPS+s)*STEP_SEC;
+      if(t > startTime + DURATION/1000) break;
+      TRACKS.forEach(id => {
+        if(grid[id][s]) playSound(ctx, id, t);
+      });
+    }
+  }
+
+  // Progress bar
+  const start = Date.now();
+  const timer = setInterval(()=>{
+    const pct = Math.min(100,((Date.now()-start)/DURATION)*100);
+    document.getElementById('progress-bar').style.width = pct+'%';
+    if(pct>=100) clearInterval(timer);
+  },50);
+
+  setTimeout(()=>{
+    ctx.close();
+    clearInterval(timer);
+    onDone();
+  }, DURATION);
+}
+
+// ── Test logic ────────────────────────────────────────────────────────────────
+let order=[], voted=false;
+const $=id=>document.getElementById(id);
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function setBig(txt,col){
+  $('big-label').textContent=txt;
+  $('big-label').style.color=col||'#ff4500';
+  $('big-label').style.textShadow=`0 0 30px ${col||'#ff4500'}66`;
+}
+
+async function runTest(){
+  $('btn-start').style.display='none';
+  $('reveal-box').style.display='none';
+  $('vote-row').style.display='none';
+  $('vote-question').style.display='none';
+  $('result-msg').style.display='none';
+  $('progress-bar').style.width='0%';
+  voted=false;
+
+  order = Math.random()<0.5 ? ['pi','random'] : ['random','pi'];
+
+  // Countdown
+  for(let i=3;i>=1;i--){
+    setBig(i,'#555'); $('phase-label').textContent='STARTING IN';
+    $('status').textContent='';
+    await sleep(900);
+  }
+
+  // Segment A
+  $('phase-label').textContent='NOW PLAYING';
+  setBig('A','#00ccff');
+  $('status').textContent='LISTEN CAREFULLY';
+  $('progress-bar').style.width='0%';
+  const gridA = order[0]==='pi' ? makePiGrid() : makeRandomGrid();
+  await new Promise(res=>playGrid(gridA,res));
+
+  // Gap
+  setBig('···','#333'); $('phase-label').textContent='SWITCHING';
+  $('status').textContent=''; $('progress-bar').style.width='0%';
+  await sleep(1200);
+
+  // Segment B
+  $('phase-label').textContent='NOW PLAYING';
+  setBig('B','#aa44ff');
+  $('status').textContent='LISTEN CAREFULLY';
+  $('progress-bar').style.width='0%';
+  const gridB = order[1]==='pi' ? makePiGrid() : makeRandomGrid();
+  await new Promise(res=>playGrid(gridB,res));
+
+  // Vote
+  setBig('?','#ff4500');
+  $('phase-label').textContent='YOUR TURN';
+  $('status').textContent='';
+  $('vote-question').style.display='block';
+  $('vote-row').style.display='flex';
+}
+
+function handleVote(choice){
+  if(voted) return; voted=true;
+  $('vote-row').style.display='none';
+  $('vote-question').style.display='none';
+
+  const piLabel = order[0]==='pi'?'A':'B';
+  const correct = choice===piLabel;
+
+  const msg=$('result-msg');
+  msg.style.display='block';
+  msg.style.color = correct?'#00ff88':'#ff4500';
+  msg.textContent = correct ? '✓ CORRECT · YOUR EAR IS CALIBRATED'
+                             : '✗ WRONG · π FOOLED YOU THIS TIME';
+
+  $('reveal-box').style.display='block';
+  $('reveal-box').innerHTML=`
+    <div class="r-row">
+      <span class="r-letter" style="color:#00ccff">A</span>
+      <span class="r-what">was <span>${order[0].toUpperCase()}</span></span>
+    </div>
+    <div class="r-row">
+      <span class="r-letter" style="color:#aa44ff">B</span>
+      <span class="r-what">was <span>${order[1].toUpperCase()}</span></span>
+    </div>
+    <div class="r-row">
+      <span class="r-what" style="font-size:9px;color:#444">YOU PICKED</span>
+      <span class="r-what"><span>${choice}</span> as more organic</span>
+    </div>`;
+
+  setBig(correct?'✓':'✗', correct?'#00ff88':'#ff4500');
+  $('phase-label').textContent = correct?'WELL HEARD':'INTERESTING';
+
+  $('btn-start').textContent='▶ TEST AGAIN';
+  $('btn-start').style.display='block';
+}
+
+$('btn-start').onclick = runTest;
+$('btn-a').onclick = ()=>handleVote('A');
+$('btn-b').onclick = ()=>handleVote('B');
+</script>
+</body>
+</html>
