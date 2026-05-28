@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geoffrey Hinton — Archive</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a08;
+      --cream: #e8e0cc;
+      --gold: #c9a84c;
+      --muted: #6b6650;
+      --border: #1e1e18;
+      --red: #8b2020;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Crimson Pro', serif;
+      min-height: 100vh;
+      padding: 60px 24px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .back {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-decoration: none;
+      text-transform: uppercase;
+      display: inline-block;
+      margin-bottom: 60px;
+      transition: color 0.2s;
+    }
+    .back:hover { color: var(--gold); }
+
+    .tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 4px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 12vw, 6rem);
+      letter-spacing: 4px;
+      line-height: 0.95;
+      color: var(--cream);
+      margin-bottom: 8px;
+    }
+
+    h1 span { color: var(--gold); }
+
+    .subtitle {
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--muted);
+      margin-bottom: 50px;
+      font-weight: 300;
+    }
+
+    .intro {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: #a09880;
+      margin-bottom: 60px;
+      border-left: 2px solid var(--border);
+      padding-left: 20px;
+    }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 4px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .links { display: flex; flex-direction: column; gap: 2px; margin-bottom: 60px; }
+
+    .link-item {
+      display: block;
+      text-decoration: none;
+      padding: 22px 24px;
+      border: 1px solid var(--border);
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .link-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--gold);
+      transform: scaleY(0);
+      transition: transform 0.25s;
+    }
+
+    .link-item:hover {
+      border-color: #2a2820;
+      background: #0f0f0c;
+    }
+
+    .link-item:hover::before { transform: scaleY(1); }
+
+    .link-number {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .link-title {
+      font-size: 1.15rem;
+      color: var(--cream);
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+
+    .link-source {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--gold);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .link-arrow {
+      position: absolute;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+      color: var(--muted);
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .link-item:hover .link-arrow {
+      color: var(--gold);
+      transform: translateY(-50%) translateX(4px);
+    }
+
+    .quote {
+      border-top: 1px solid var(--border);
+      padding-top: 40px;
+      margin-bottom: 60px;
+    }
+
+    .quote blockquote {
+      font-style: italic;
+      font-size: 1.3rem;
+      line-height: 1.7;
+      color: #7a7260;
+      margin-bottom: 12px;
+    }
+
+    .quote cite {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-style: normal;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 2px;
+      color: var(--border);
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--gold); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    body > * { animation: fadeUp 0.6s ease both; }
+    .back { animation-delay: 0.0s; }
+    .tag { animation-delay: 0.1s; }
+    h1 { animation-delay: 0.15s; }
+    .subtitle { animation-delay: 0.2s; }
+    .intro { animation-delay: 0.25s; }
+    .section-label { animation-delay: 0.3s; }
+    .links { animation-delay: 0.35s; }
+    .quote { animation-delay: 0.4s; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="back">← Back to Gang</a>
+
+  <div class="tag">Bunker Archive — AI Research</div>
+  <h1>Geoffrey<br><span>Hinton</span></h1>
+  <p class="subtitle">The Godfather of AI — on what he built and what he fears</p>
+
+  <p class="intro">
+    Nobel Laureate. Turing Award winner. The man whose work on neural networks made modern AI possible — and who now warns it may be the last thing humanity invents unsupervised. Three essential talks.
+  </p>
+
+  <div class="section-label">Essential Viewing</div>
+
+  <div class="links">
+
+    <a href="https://www.youtube.com/watch?v=N1TEjTeQeg0" target="_blank" class="link-item">
+      <div class="link-number">01</div>
+      <div class="link-title">Will digital intelligence replace biological intelligence?</div>
+      <div class="link-source">Oxford — Romanes Lecture 2024</div>
+      <span class="link-arrow">→</span>
+    </a>
+
+    <a href="https://www.youtube.com/watch?v=IkdziSLYzHw" target="_blank" class="link-item">
+      <div class="link-number">02</div>
+      <div class="link-title">The danger of AI</div>
+      <div class="link-source">The Royal Institution</div>
+      <span class="link-arrow">→</span>
+    </a>
+
+    <a href="https://www.youtube.com/watch?v=qrvK_KuIeJk" target="_blank" class="link-item">
+      <div class="link-number">03</div>
+      <div class="link-title">Godfather of AI — The 60 Minutes Interview</div>
+      <div class="link-source">CBS News</div>
+      <span class="link-arrow">→</span>
+    </a>
+
+  </div>
+
+  <div class="quote">
+    <blockquote>„I think we're moving into a period when for the first time ever we may have things more intelligent than us."</blockquote>
+    <cite>— Geoffrey Hinton</cite>
+  </div>
+
+  <footer>
+    <span>Bunker Archive 2026</span>
+    <a href="index.html">Die Gang</a>
+  </footer>
+
+</body>
+</html>
