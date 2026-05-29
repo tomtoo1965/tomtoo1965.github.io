@@ -98,6 +98,79 @@ button:hover, button:active { background: #ff4500; color: #000; }
   min-height: 18px; margin-bottom: 20px;
   display: none;
 }
+
+/* ── STATS PANEL ── */
+#stats-panel {
+  margin-top: 24px;
+  background: #0a0a0a;
+  border: 1px solid #222;
+  border-radius: 10px;
+  padding: 18px 20px;
+  text-align: left;
+}
+.stats-title {
+  font-size: 9px; letter-spacing: 4px; color: #444;
+  text-transform: uppercase; margin-bottom: 14px;
+  text-align: center;
+}
+.stat-row {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 7px 0;
+  border-bottom: 1px solid #161616;
+  font-size: 10px; letter-spacing: 2px;
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-label { color: #444; }
+.stat-value { color: #fff; font-weight: bold; }
+.stat-value.good { color: #00ff88; }
+.stat-value.bad  { color: #ff4500; }
+.stat-value.neutral { color: #ffcc00; }
+
+/* significance bar */
+#sig-wrap {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #161616;
+}
+.sig-label {
+  font-size: 9px; letter-spacing: 3px; color: #444;
+  margin-bottom: 8px; text-align: center;
+}
+#sig-bar-bg {
+  width: 100%; height: 6px; background: #1a1a1a;
+  border-radius: 3px; overflow: hidden; margin-bottom: 6px;
+}
+#sig-bar {
+  height: 100%; width: 0%;
+  border-radius: 3px;
+  transition: width 0.6s ease, background 0.6s ease;
+}
+#sig-text {
+  font-size: 9px; letter-spacing: 2px; color: #444;
+  text-align: center;
+}
+
+#btn-reset {
+  background: none; border: 1px solid #222;
+  color: #333; cursor: pointer;
+  font-family: 'Courier New', monospace;
+  border-radius: 4px; padding: 8px 16px;
+  font-size: 9px; letter-spacing: 3px;
+  transition: all .15s; width: 100%;
+  margin-top: 14px; margin-bottom: 0;
+}
+#btn-reset:hover { border-color: #ff4500; color: #ff4500; background: none; }
+
+#btn-send {
+  background: none; border: 1px solid #00ccff;
+  color: #00ccff; cursor: pointer;
+  font-family: 'Courier New', monospace;
+  border-radius: 4px; padding: 8px 16px;
+  font-size: 9px; letter-spacing: 3px;
+  transition: all .15s; width: 100%;
+  margin-top: 8px; margin-bottom: 0;
+}
+#btn-send:hover { background: #00ccff; color: #000; }
 </style>
 </head>
 <body>
@@ -121,6 +194,38 @@ button:hover, button:active { background: #ff4500; color: #000; }
   <div id="reveal-box"></div>
 
   <button id="btn-start">▶ START TEST</button>
+
+  <!-- STATS -->
+  <div id="stats-panel">
+    <div class="stats-title">◈ CUMULATIVE STATISTICS</div>
+    <div class="stat-row">
+      <span class="stat-label">TOTAL TESTS</span>
+      <span class="stat-value" id="s-total">0</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">CORRECT</span>
+      <span class="stat-value" id="s-correct">0</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">HIT RATE</span>
+      <span class="stat-value" id="s-rate">—</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">EXPECTED (CHANCE)</span>
+      <span class="stat-value neutral">50.0%</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">DEVIATION</span>
+      <span class="stat-value" id="s-dev">—</span>
+    </div>
+    <div id="sig-wrap">
+      <div class="sig-label">STATISTICAL SIGNIFICANCE (p-value)</div>
+      <div id="sig-bar-bg"><div id="sig-bar"></div></div>
+      <div id="sig-text">NOT ENOUGH DATA YET</div>
+    </div>
+    <button id="btn-reset">⟳ RESET STATISTICS</button>
+    <button id="btn-send">✉ SEND RESULTS</button>
+  </div>
 </div>
 
 <script>
@@ -267,7 +372,6 @@ function playGrid(grid, onDone) {
     }
   }
 
-  // Progress bar
   const start = Date.now();
   const timer = setInterval(()=>{
     const pct = Math.min(100,((Date.now()-start)/DURATION)*100);
@@ -280,6 +384,95 @@ function playGrid(grid, onDone) {
     clearInterval(timer);
     onDone();
   }, DURATION);
+}
+
+// ── Statistics ────────────────────────────────────────────────────────────────
+function loadStats() {
+  try {
+    const s = localStorage.getItem('pi_test_stats');
+    return s ? JSON.parse(s) : { total: 0, correct: 0 };
+  } catch(e) { return { total: 0, correct: 0 }; }
+}
+
+function saveStats(stats) {
+  try { localStorage.setItem('pi_test_stats', JSON.stringify(stats)); } catch(e) {}
+}
+
+// Binomial test: p-value against H0: p=0.5
+// Uses normal approximation for n >= 10
+function binomialPValue(n, k) {
+  if (n < 5) return null;
+  // z = (k - n*0.5) / sqrt(n*0.25)
+  const z = Math.abs((k - n * 0.5) / Math.sqrt(n * 0.25));
+  // Two-tailed p-value approximation
+  const p = 2 * (1 - normalCDF(z));
+  return p;
+}
+
+function normalCDF(z) {
+  // Abramowitz & Stegun approximation
+  const t = 1/(1+0.2316419*z);
+  const poly = t*(0.319381530 + t*(-0.356563782 + t*(1.781477937 + t*(-1.821255978 + t*1.330274429))));
+  return 1 - (1/Math.sqrt(2*Math.PI))*Math.exp(-0.5*z*z)*poly;
+}
+
+function updateStatsUI() {
+  const stats = loadStats();
+  const { total, correct } = stats;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-correct').textContent = correct;
+
+  if (total === 0) {
+    document.getElementById('s-rate').textContent = '—';
+    document.getElementById('s-rate').className = 'stat-value';
+    document.getElementById('s-dev').textContent = '—';
+    document.getElementById('s-dev').className = 'stat-value';
+    document.getElementById('sig-bar').style.width = '0%';
+    document.getElementById('sig-text').textContent = 'NOT ENOUGH DATA YET';
+    return;
+  }
+
+  const rate = (correct / total * 100).toFixed(1);
+  const dev = ((correct / total - 0.5) * 100).toFixed(1);
+
+  const rateEl = document.getElementById('s-rate');
+  rateEl.textContent = rate + '%';
+  rateEl.className = 'stat-value ' + (correct/total > 0.5 ? 'good' : correct/total < 0.5 ? 'bad' : 'neutral');
+
+  const devEl = document.getElementById('s-dev');
+  const devSign = dev > 0 ? '+' : '';
+  devEl.textContent = devSign + dev + '%';
+  devEl.className = 'stat-value ' + (dev > 0 ? 'good' : dev < 0 ? 'bad' : 'neutral');
+
+  // p-value
+  const pVal = binomialPValue(total, correct);
+  const sigBar = document.getElementById('sig-bar');
+  const sigText = document.getElementById('sig-text');
+
+  if (pVal === null) {
+    sigBar.style.width = '0%';
+    sigText.textContent = 'NOT ENOUGH DATA YET (MIN 5 TESTS)';
+  } else {
+    // Convert p to visual: p=0.05 → 95% bar, p=0.01 → 99%
+    const confidence = (1 - pVal) * 100;
+    const barWidth = Math.min(100, confidence).toFixed(1);
+    sigBar.style.width = barWidth + '%';
+
+    if (pVal <= 0.01) {
+      sigBar.style.background = '#00ff88';
+      sigText.textContent = `p = ${pVal.toFixed(4)} · HIGHLY SIGNIFICANT (***)`;
+    } else if (pVal <= 0.05) {
+      sigBar.style.background = '#ffcc00';
+      sigText.textContent = `p = ${pVal.toFixed(4)} · SIGNIFICANT (**)`;
+    } else if (pVal <= 0.1) {
+      sigBar.style.background = '#ff8800';
+      sigText.textContent = `p = ${pVal.toFixed(4)} · MARGINAL (*)`;
+    } else {
+      sigBar.style.background = '#ff4500';
+      sigText.textContent = `p = ${pVal.toFixed(4)} · NOT SIGNIFICANT`;
+    }
+  }
 }
 
 // ── Test logic ────────────────────────────────────────────────────────────────
@@ -305,14 +498,12 @@ async function runTest(){
 
   order = Math.random()<0.5 ? ['pi','random'] : ['random','pi'];
 
-  // Countdown
   for(let i=3;i>=1;i--){
     setBig(i,'#555'); $('phase-label').textContent='STARTING IN';
     $('status').textContent='';
     await sleep(900);
   }
 
-  // Segment A
   $('phase-label').textContent='NOW PLAYING';
   setBig('A','#00ccff');
   $('status').textContent='LISTEN CAREFULLY';
@@ -320,12 +511,10 @@ async function runTest(){
   const gridA = order[0]==='pi' ? makePiGrid() : makeRandomGrid();
   await new Promise(res=>playGrid(gridA,res));
 
-  // Gap
   setBig('···','#333'); $('phase-label').textContent='SWITCHING';
   $('status').textContent=''; $('progress-bar').style.width='0%';
   await sleep(1200);
 
-  // Segment B
   $('phase-label').textContent='NOW PLAYING';
   setBig('B','#aa44ff');
   $('status').textContent='LISTEN CAREFULLY';
@@ -333,7 +522,6 @@ async function runTest(){
   const gridB = order[1]==='pi' ? makePiGrid() : makeRandomGrid();
   await new Promise(res=>playGrid(gridB,res));
 
-  // Vote
   setBig('?','#ff4500');
   $('phase-label').textContent='YOUR TURN';
   $('status').textContent='';
@@ -348,6 +536,12 @@ function handleVote(choice){
 
   const piLabel = order[0]==='pi'?'A':'B';
   const correct = choice===piLabel;
+
+  // Save to stats
+  const stats = loadStats();
+  stats.total += 1;
+  if (correct) stats.correct += 1;
+  saveStats(stats);
 
   const msg=$('result-msg');
   msg.style.display='block';
@@ -375,11 +569,48 @@ function handleVote(choice){
 
   $('btn-start').textContent='▶ TEST AGAIN';
   $('btn-start').style.display='block';
+
+  updateStatsUI();
 }
 
 $('btn-start').onclick = runTest;
 $('btn-a').onclick = ()=>handleVote('A');
 $('btn-b').onclick = ()=>handleVote('B');
+
+$('btn-reset').onclick = () => {
+  if(confirm('Reset all statistics?')) {
+    saveStats({ total: 0, correct: 0 });
+    updateStatsUI();
+  }
+};
+
+$('btn-send').onclick = () => {
+  const stats = loadStats();
+  if (stats.total === 0) {
+    alert('No test results yet!');
+    return;
+  }
+  const rate = (stats.correct / stats.total * 100).toFixed(1);
+  const dev = ((stats.correct / stats.total - 0.5) * 100).toFixed(1);
+  const pVal = binomialPValue(stats.total, stats.correct);
+  const pText = pVal ? `p = ${pVal.toFixed(4)}` : 'not enough data';
+  const devSign = dev > 0 ? '+' : '';
+
+  const body = `Pi Blind Test Results
+=====================
+Total Tests : ${stats.total}
+Correct     : ${stats.correct}
+Hit Rate    : ${rate}%
+Deviation   : ${devSign}${dev}% (vs 50% chance)
+p-value     : ${pText}
+
+Tested at: https://tomtoo1965.github.io/pi.html`;
+
+  window.location.href = `mailto:tomtoo@web.de?subject=Pi Test Results&body=${encodeURIComponent(body)}`;
+};
+
+// Init
+updateStatsUI();
 </script>
 </body>
 </html>
